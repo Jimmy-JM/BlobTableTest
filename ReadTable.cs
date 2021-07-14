@@ -12,7 +12,7 @@ using Microsoft.Azure.Cosmos.Table;
 
 namespace Jongmin.Function
 {
-    public static class ReadTable
+public static class ReadTable
     {
         [FunctionName("ReadTable")]
         public static Task<string> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
@@ -33,6 +33,7 @@ namespace Jongmin.Function
 
             Task<string> response = ReadToTable(tableA, filterA, filterB);
             return response;
+        
         }
 
         static async Task<string> ReadToTable(CloudTable tableA, string filterA, string filterB)
@@ -41,13 +42,13 @@ namespace Jongmin.Function
                 TableQuery.CombineFilters(filterA, TableOperators.And, filterB)
             );
             TableContinuationToken tokenA = null;
-            rangeQ.TakeCount = 1000;
+            rangeQ.TakeCount =  1000;
             JArray resultArr = new JArray();
             try
             {
                 do
                 {
-                    TableQuerySegment<MemoData> segment = await tableA.ExecuteQuerySegmentedAsync(rangeQ, tokenA);
+                    TableQuerySegment<MemoData> segment =await tableA.ExecuteQuerySegmentedAsync(rangeQ, tokenA);
                     tokenA = segment.ContinuationToken;
                     foreach (MemoData entity in segment)
                     {
@@ -55,6 +56,7 @@ namespace Jongmin.Function
                         //srcObj.Remove("Timestamp");
                         resultArr.Add(srcObj);
                     }
+
                 } while (tokenA != null);
             }
             catch (StorageException e)
@@ -63,10 +65,12 @@ namespace Jongmin.Function
                 throw;
             }
 
+
             string resultA = Newtonsoft.Json.JsonConvert.SerializeObject(resultArr);
-            if (resultA != null) return resultA;
-            else return "No Data";
+            if(resultA != null) return resultA;
+            else return "No Date";
         }
+
 
         private class MemoData : TableEntity
         {
