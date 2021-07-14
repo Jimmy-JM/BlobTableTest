@@ -35,13 +35,13 @@ namespace Jongmin.Function
             return response;
         }
 
-static async Task<string> ReadToTable(CloudTable tableA, string filterA, string filterB)
+        static async Task<string> ReadToTable(CloudTable tableA, string filterA, string filterB)
         {
             TableQuery<MemoData> rangeQ = new TableQuery<MemoData>().Where(
                 TableQuery.CombineFilters(filterA, TableOperators.And, filterB)
             );
             TableContinuationToken tokenA = null;
-            rangeQ.TakeCount = 10000;
+            rangeQ.TakeCount = 1000;
             JArray resultArr = new JArray();
             try
             {
@@ -52,14 +52,12 @@ static async Task<string> ReadToTable(CloudTable tableA, string filterA, string 
                     foreach (MemoData entity in segment)
                     {
                         JObject srcObj = JObject.FromObject(entity);
-                        // srcObj.Remove("Timestamp");
+                        //srcObj.Remove("Timestamp");
                         resultArr.Add(srcObj);
                     }
                 } while (tokenA != null);
             }
-
-            
-catch (StorageException e)
+            catch (StorageException e)
             {
                 Console.WriteLine(e.Message);
                 throw;
@@ -72,7 +70,7 @@ catch (StorageException e)
 
         private class MemoData : TableEntity
         {
-            public string content {get; set; }
+            public string content { get; set; }
         }
     }
 }
