@@ -52,7 +52,7 @@ static async Task<string> ReadToTable(CloudTable tableA, string filterA, string 
                     foreach (MemoData entity in segment)
                     {
                         JObject srcObj = JObject.FromObject(entity);
-                        srcObj.Remove("Timestamp");
+                        // srcObj.Remove("Timestamp");
                         resultArr.Add(srcObj);
                     }
                 } while (tokenA != null);
