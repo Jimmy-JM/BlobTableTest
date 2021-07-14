@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Microsoft.Azure.Cosmos.Table;
 
 namespace Jongmin.Function
@@ -25,37 +26,48 @@ namespace Jongmin.Function
 
             CloudStorageAccount stoA = CloudStorageAccount.Parse(connStrA);
             CloudTableClient tbC = stoA.CreateCloudTableClient();
-            CloudTable TableA = tbC.GetTableReference("tableA");
+            CloudTable tableA = tbC.GetTableReference("tableA");
 
             string filterA = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.GreaterThanOrEqual, PartitionKeyA);
-            string filterB = TableQuery.GenerateFilterCondition("Rowkey", QueryComparisons.GreaterThanOrEqual, RowKeyA);
+            string filterB = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.GreaterThanOrEqual, RowKeyA);
 
-            Task<string> response = ReadToTable(TableA, filterA, filterB);
+            Task<string> response = ReadToTable(tableA, filterA, filterB);
             return response;
         }
 
-        static Task<string> ReadToTable(CloudTable tableA, string filterA, string filterB)
+static async Task<string> ReadToTable(CloudTable tableA, string filterA, string filterB)
         {
             TableQuery<MemoData> rangeQ = new TableQuery<MemoData>().Where(
                 TableQuery.CombineFilters(filterA, TableOperators.And, filterB)
             );
             TableContinuationToken tokenA = null;
             rangeQ.TakeCount = 10000;
+            JArray resultArr = new JArray();
             try
             {
                 do
                 {
-                    
-                    
+                    TableQuerySegment<MemoData> segment = await tableA.ExecuteQuerySegmentedAsync(rangeQ, tokenA);
+                    tokenA = segment.ContinuationToken;
+                    foreach (MemoData entity in segment)
+                    {
+                        JObject srcObj = JObject.FromObject(entity);
+                        srcObj.Remove("Timestamp");
+                        resultArr.Add(srcObj);
+                    }
                 } while (tokenA != null);
             }
-            catch (StorageException e)
+
+            
+catch (StorageException e)
             {
                 Console.WriteLine(e.Message);
                 throw;
             }
 
-            return "";
+            string resultA = Newtonsoft.Json.JsonConvert.SerializeObject(resultArr);
+            if (resultA != null) return resultA;
+            else return "No Data";
         }
 
         private class MemoData : TableEntity
